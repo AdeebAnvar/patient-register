@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:novindus_mechine_test/constatnts/app_colors.dart';
 import 'package:novindus_mechine_test/logic/login_screen_logic.dart';
+import 'package:novindus_mechine_test/logic/patients_logic.dart';
 import 'package:novindus_mechine_test/logic/splah_screen_logic.dart';
 import 'package:provider/provider.dart';
 import 'presentation/routes/app_router.dart' as route;
@@ -19,6 +20,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (context) => SplashScreenProvider()),
         ChangeNotifierProvider(create: (context) => LoginScreenProvider()),
+        ChangeNotifierProvider(create: (context) => PatientsLogic()),
       ],
       child: MaterialApp.router(
         routerConfig: route.router,
