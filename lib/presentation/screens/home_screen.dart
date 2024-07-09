@@ -65,7 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         body: np.isLoading
-            ? Center(
+            ? const Center(
                 child: CircularProgressIndicator(),
               )
             : np.isError
