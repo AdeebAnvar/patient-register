@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:novindus_mechine_test/presentation/screens/auth/login.dart';
 import 'package:novindus_mechine_test/presentation/screens/home_screen.dart';
+import 'package:novindus_mechine_test/presentation/screens/pdf_viewing_screen.dart';
 import 'package:novindus_mechine_test/presentation/screens/register_patient.dart';
 import 'package:novindus_mechine_test/presentation/screens/splash_screen.dart';
 
@@ -41,6 +42,19 @@ GoRouter router = GoRouter(
         RegisterPatient(),
       ),
     ),
+    GoRoute(
+        path: PdfViewingScreen.route,
+        name: PdfViewingScreen.route,
+        pageBuilder: (context, state) {
+          final Map<String, dynamic> data = state.extra! as Map<String, dynamic>;
+
+          return getCustomTransition(
+            state,
+            PdfViewingScreen(
+              file: data['file'],
+            ),
+          );
+        }),
   ],
 );
 
