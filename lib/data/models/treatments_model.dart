@@ -4,6 +4,8 @@
 
 import 'dart:convert';
 
+import 'package:novindus_mechine_test/data/models/branch_model.dart';
+
 TreatmentsModel treatmentsModelFromJson(String str) => TreatmentsModel.fromJson(json.decode(str));
 
 String treatmentsModelToJson(TreatmentsModel data) => json.encode(data.toJson());
@@ -73,54 +75,6 @@ class Treatment {
         "is_active": isActive,
         "created_at": createdAt?.toIso8601String(),
         "updated_at": updatedAt?.toIso8601String(),
-      };
-}
-
-class Branch {
-  int? id;
-  Name? name;
-  int? patientsCount;
-  Location? location;
-  Phone? phone;
-  Mail? mail;
-  Address? address;
-  String? gst;
-  bool? isActive;
-
-  Branch({
-    this.id,
-    this.name,
-    this.patientsCount,
-    this.location,
-    this.phone,
-    this.mail,
-    this.address,
-    this.gst,
-    this.isActive,
-  });
-
-  factory Branch.fromJson(Map<String, dynamic> json) => Branch(
-        id: json["id"],
-        name: nameValues.map[json["name"]]!,
-        patientsCount: json["patients_count"],
-        location: locationValues.map[json["location"]]!,
-        phone: phoneValues.map[json["phone"]]!,
-        mail: mailValues.map[json["mail"]]!,
-        address: addressValues.map[json["address"]]!,
-        gst: json["gst"],
-        isActive: json["is_active"],
-      );
-
-  Map<String, dynamic> toJson() => {
-        "id": id,
-        "name": nameValues.reverse[name],
-        "patients_count": patientsCount,
-        "location": locationValues.reverse[location],
-        "phone": phoneValues.reverse[phone],
-        "mail": mailValues.reverse[mail],
-        "address": addressValues.reverse[address],
-        "gst": gst,
-        "is_active": isActive,
       };
 }
 

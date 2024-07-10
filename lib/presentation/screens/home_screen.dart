@@ -156,30 +156,32 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                   ),
-        bottomNavigationBar: Container(
-          height: 70,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black26,
-                spreadRadius: 5,
-                blurRadius: 10,
+        bottomNavigationBar: np.isLoading || np.isError
+            ? null
+            : Container(
+                height: 70,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26,
+                      spreadRadius: 5,
+                      blurRadius: 10,
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.all(10),
+                child: TextButton(
+                  onPressed: () => context.pushNamed(RegisterPatient.route),
+                  style: AppStyles.filledButton.copyWith(
+                    padding: const WidgetStatePropertyAll(EdgeInsets.all(10)),
+                    fixedSize: WidgetStatePropertyAll(
+                      Size(MediaQuery.sizeOf(context).width, 50),
+                    ),
+                  ),
+                  child: const Text('Register Now'),
+                ),
               ),
-            ],
-          ),
-          padding: const EdgeInsets.all(10),
-          child: TextButton(
-            onPressed: () => context.pushNamed(RegisterPatient.route),
-            style: AppStyles.filledButton.copyWith(
-              padding: const WidgetStatePropertyAll(EdgeInsets.all(10)),
-              fixedSize: WidgetStatePropertyAll(
-                Size(MediaQuery.sizeOf(context).width, 50),
-              ),
-            ),
-            child: const Text('Register Now'),
-          ),
-        ),
       );
     });
   }

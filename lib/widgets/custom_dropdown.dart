@@ -56,7 +56,13 @@ class CustomDropDownButtonField<T> extends StatelessWidget {
       items: items.map((i) {
         return DropdownMenuItem<T>(
           value: i,
-          child: Text(i.toString()),
+          child: Container(
+            width: MediaQuery.of(context).size.width / 2, // Adjust as needed
+            child: Text(
+              i.toString(),
+              overflow: TextOverflow.clip,
+            ),
+          ),
         );
       }).toList(),
       validator: validator,

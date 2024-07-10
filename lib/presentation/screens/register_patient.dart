@@ -2,9 +2,12 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 import 'package:novindus_mechine_test/constatnts/app_colors.dart';
+import 'package:novindus_mechine_test/constatnts/date_utils.dart';
 import 'package:novindus_mechine_test/constatnts/styles.dart';
+import 'package:novindus_mechine_test/data/models/treatments_model.dart';
 import 'package:novindus_mechine_test/logic/patients_logic.dart';
 import 'package:novindus_mechine_test/presentation/screens/pdf_viewing_screen.dart';
 import 'package:novindus_mechine_test/widgets/creat_pdf.dart';
@@ -25,7 +28,10 @@ class RegisterPatient extends StatefulWidget {
 }
 
 class _RegisterPatientState extends State<RegisterPatient> {
+  GlobalKey<FormState> formKey = GlobalKey();
+
   PatientsLogic patientsLogic = PatientsLogic();
+
   TextEditingController nameController = TextEditingController();
   TextEditingController whatsappNumberController = TextEditingController();
   TextEditingController addressController = TextEditingController();
@@ -38,6 +44,8 @@ class _RegisterPatientState extends State<RegisterPatient> {
   TextEditingController treatmentDateController = TextEditingController();
 
   String? location;
+  String? selectedPayment;
+  String? treatmentDate;
   String? treatmentHour;
   String? treatmentMinute;
   String? branch;
@@ -97,259 +105,383 @@ class _RegisterPatientState extends State<RegisterPatient> {
                     const Divider(),
                     Padding(
                       padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          TextFieldWithLabel(
-                            controller: nameController,
-                            hint: 'Enter your full name',
-                            label: 'Name',
-                          ),
-                          const SizedBox(height: 20),
-                          TextFieldWithLabel(
-                            controller: whatsappNumberController,
-                            hint: 'Enter your whatsapp number',
-                            label: 'Whatsapp Number',
-                          ),
-                          const SizedBox(height: 20),
-                          TextFieldWithLabel(
-                            controller: addressController,
-                            hint: 'Enter your full address',
-                            label: 'Address',
-                          ),
-                          const SizedBox(height: 20),
-                          Text(
-                            'Location',
-                            style: AppStyles.getRegularStyle(fontSize: 16),
-                          ),
-                          const SizedBox(height: 5),
-                          CustomDropDownButtonField(
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(7),
-                              borderSide: BorderSide.none,
+                      child: Form(
+                        key: formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            TextFieldWithLabel(
+                              controller: nameController,
+                              hint: 'Enter your full name',
+                              label: 'Name',
+                              validator: (v) {
+                                if (v!.length < 3) {
+                                  return 'Enter a valid name';
+                                }
+                              },
                             ),
-                            fillColor: Colors.grey.shade200,
-                            items: ['Cochin', 'Kasargode', 'Palakkad'],
-                            hint: 'Choose your Location',
-                            icon: const Icon(Icons.keyboard_arrow_down_sharp),
-                            onChanged: (v) {
-                              location = v!;
-                            },
-                          ),
-                          const SizedBox(height: 20),
-                          Text(
-                            'Branch',
-                            style: AppStyles.getRegularStyle(fontSize: 16),
-                          ),
-                          const SizedBox(height: 5),
-                          pl.branchModel.branches!.isEmpty
-                              ? const SizedBox()
-                              : CustomDropDownButtonField(
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(7),
-                                    borderSide: BorderSide.none,
+                            const SizedBox(height: 20),
+                            TextFieldWithLabel(
+                              keyboardType: TextInputType.phone,
+                              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                              validator: (v) {
+                                if (v!.length < 6 || v!.length > 12) {
+                                  return 'Enter a valid number';
+                                }
+                              },
+                              controller: whatsappNumberController,
+                              hint: 'Enter your whatsapp number',
+                              label: 'Whatsapp Number',
+                            ),
+                            const SizedBox(height: 20),
+                            TextFieldWithLabel(
+                              validator: (v) {
+                                if (v!.length < 3) {
+                                  return 'Enter a valid address';
+                                }
+                              },
+                              controller: addressController,
+                              hint: 'Enter your full address',
+                              label: 'Address',
+                            ),
+                            const SizedBox(height: 20),
+                            Text(
+                              'Location',
+                              style: AppStyles.getRegularStyle(fontSize: 16),
+                            ),
+                            const SizedBox(height: 5),
+                            CustomDropDownButtonField(
+                              validator: (v) {
+                                if (v == null) {
+                                  return 'Choose a location';
+                                }
+                              },
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(7),
+                                borderSide: BorderSide.none,
+                              ),
+                              fillColor: Colors.grey.shade200,
+                              items: ['Cochin', 'Kasargode', 'Palakkad'],
+                              hint: 'Choose your Location',
+                              icon: const Icon(Icons.keyboard_arrow_down_sharp),
+                              onChanged: (v) {
+                                location = v!;
+                              },
+                            ),
+                            const SizedBox(height: 20),
+                            Text(
+                              'Branch',
+                              style: AppStyles.getRegularStyle(fontSize: 16),
+                            ),
+                            const SizedBox(height: 5),
+                            pl.branchModel.branches!.isEmpty
+                                ? const SizedBox()
+                                : CustomDropDownButtonField(
+                                    validator: (v) {
+                                      if (v == null) {
+                                        return 'Choose a branch';
+                                      }
+                                    },
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(7),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    fillColor: Colors.grey.shade200,
+                                    items: pl.branchModel.branches!.map((e) => e.name).toList(),
+                                    hint: 'Selct the branch',
+                                    icon: const Icon(Icons.keyboard_arrow_down_sharp),
+                                    onChanged: (v) {
+                                      branch = v!;
+                                    },
                                   ),
-                                  fillColor: Colors.grey.shade200,
-                                  items: pl.branchModel.branches!.map((e) => e.name).toList(),
-                                  hint: 'Selct the branch',
-                                  icon: const Icon(Icons.keyboard_arrow_down_sharp),
-                                  onChanged: (v) {
-                                    branch = v!;
-                                  },
-                                ),
-                          const SizedBox(height: 20),
-                          Text(
-                            'Treatments',
-                            style: AppStyles.getRegularStyle(fontSize: 16),
-                          ),
-                          const SizedBox(height: 5),
-                          if (pl.selectedTreatments.isEmpty) Align(child: Text('No treatments choosen')),
-                          Column(
-                            children: pl.selectedTreatments
-                                .asMap()
-                                .entries
-                                .map(
-                                  (e) => TreatmentCard(
-                                    onRemove: () => pl.removeTreatment(e.key),
-                                    onEdit: () => treatMentDialogue(
-                                      context,
-                                      'edit',
-                                      index: e.key,
-                                      pl.treatmentsModel.treatments!.map((e) => e.name!).toList(),
-                                      femaleCount: e.value['female'],
+                            const SizedBox(height: 20),
+                            Text(
+                              'Treatments',
+                              style: AppStyles.getRegularStyle(fontSize: 16),
+                            ),
+                            const SizedBox(height: 5),
+                            if (pl.selectedTreatments.isEmpty) Align(child: Text('No treatments choosen')),
+                            Column(
+                              children: pl.selectedTreatments
+                                  .asMap()
+                                  .entries
+                                  .map(
+                                    (e) => TreatmentCard(
+                                      onRemove: () => pl.removeTreatment(e.key),
+                                      onEdit: () => treatMentDialogue(
+                                        context,
+                                        'edit',
+                                        index: e.key,
+                                        pl.treatmentsModel.treatments!.map((e) => e.name!).toList(),
+                                        femaleCount: e.value['female'],
+                                        maleCount: e.value['male'],
+                                        selectedTreatment: e.value['treatment'],
+                                      ),
+                                      name: e.value['treatment'],
+                                      number: '${e.key + 1}',
                                       maleCount: e.value['male'],
-                                      selectedTreatment: e.value['treatment'],
+                                      femaleCount: e.value['female'],
                                     ),
-                                    name: e.value['treatment'],
-                                    number: '${e.key + 1}',
-                                    maleCount: e.value['male'],
-                                    femaleCount: e.value['female'],
+                                  )
+                                  .toList(),
+                            ),
+                            const SizedBox(height: 20),
+                            TextButton.icon(
+                              onPressed: () => treatMentDialogue(context, 'add', pl.treatmentsModel.treatments!.map((e) => e.name!).toList()),
+                              style: AppStyles.filledButton.copyWith(
+                                padding: const WidgetStatePropertyAll(EdgeInsets.zero),
+                                shape: WidgetStatePropertyAll(RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(9),
+                                )),
+                                foregroundColor: const WidgetStatePropertyAll(Colors.black),
+                                backgroundColor: WidgetStatePropertyAll(AppColors.lightGreen.withOpacity(0.3)),
+                                fixedSize: WidgetStatePropertyAll(
+                                  Size(MediaQuery.sizeOf(context).width, 50),
+                                ),
+                              ),
+                              icon: const Icon(Icons.add),
+                              label: const Text('Add Treatments'),
+                            ),
+                            const SizedBox(height: 20),
+                            TextFieldWithLabel(
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                              validator: (v) {
+                                if (v!.isEmpty) {
+                                  return 'Enter a amount';
+                                }
+                              },
+                              controller: totalAmountController,
+                              label: 'Total Amount',
+                              hint: '',
+                            ),
+                            const SizedBox(height: 20),
+                            TextFieldWithLabel(
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                              validator: (v) {
+                                if (v!.isEmpty) {
+                                  return 'Enter a amount';
+                                }
+                              },
+                              controller: discountAmountController,
+                              label: 'Discount Amount',
+                              hint: '',
+                            ),
+                            const SizedBox(height: 20),
+                            Text(
+                              'Payment Option',
+                              style: AppStyles.getRegularStyle(fontSize: 16),
+                            ),
+                            const SizedBox(height: 5),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      Radio(
+                                        value: pl.cashPayment,
+                                        groupValue: true,
+                                        onChanged: (v) => pl.changePaymentMode(v, 'cash'),
+                                      ),
+                                      Text(
+                                        'Cash',
+                                        style: AppStyles.getRegularStyle(fontSize: 16),
+                                      ),
+                                    ],
                                   ),
-                                )
-                                .toList(),
-                          ),
-                          const SizedBox(height: 20),
-                          TextButton.icon(
-                            onPressed: () => treatMentDialogue(
-                              context,
-                              'add',
-                              pl.treatmentsModel.treatments!.map((e) => e.name!).toList(),
-                            ),
-                            style: AppStyles.filledButton.copyWith(
-                              padding: const WidgetStatePropertyAll(EdgeInsets.zero),
-                              shape: WidgetStatePropertyAll(RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(9),
-                              )),
-                              foregroundColor: const WidgetStatePropertyAll(Colors.black),
-                              backgroundColor: WidgetStatePropertyAll(AppColors.lightGreen.withOpacity(0.3)),
-                              fixedSize: WidgetStatePropertyAll(
-                                Size(MediaQuery.sizeOf(context).width, 50),
-                              ),
-                            ),
-                            icon: const Icon(Icons.add),
-                            label: const Text('Add Treatments'),
-                          ),
-                          const SizedBox(height: 20),
-                          TextFieldWithLabel(
-                            controller: totalAmountController,
-                            label: 'Total Amount',
-                            hint: '',
-                          ),
-                          const SizedBox(height: 20),
-                          TextFieldWithLabel(
-                            controller: discountAmountController,
-                            label: 'Discount Amount',
-                            hint: '',
-                          ),
-                          const SizedBox(height: 20),
-                          Text(
-                            'Payment Option',
-                            style: AppStyles.getRegularStyle(fontSize: 16),
-                          ),
-                          const SizedBox(height: 5),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Row(
-                                  children: [
-                                    Radio(
-                                      value: true,
-                                      groupValue: true,
-                                      onChanged: (v) {},
-                                    ),
-                                    Text(
-                                      'Cash',
-                                      style: AppStyles.getRegularStyle(fontSize: 16),
-                                    ),
-                                  ],
                                 ),
-                              ),
-                              Expanded(
-                                child: Row(
-                                  children: [
-                                    Radio(
-                                      value: false,
-                                      groupValue: true,
-                                      onChanged: (v) {},
-                                    ),
-                                    Text(
-                                      'Card',
-                                      style: AppStyles.getRegularStyle(fontSize: 16),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Expanded(
-                                child: Row(
-                                  children: [
-                                    Radio(
-                                      value: false,
-                                      groupValue: true,
-                                      onChanged: (v) {},
-                                    ),
-                                    Text(
-                                      'UPI',
-                                      style: AppStyles.getRegularStyle(fontSize: 16),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                          TextFieldWithLabel(
-                            controller: advanceAmountController,
-                            label: 'Advance Amount',
-                            hint: '',
-                          ),
-                          const SizedBox(height: 20),
-                          TextFieldWithLabel(
-                            controller: balanceAmountController,
-                            label: 'Balance Amount',
-                            hint: '',
-                          ),
-                          const SizedBox(height: 20),
-                          TextFieldWithLabel(
-                            controller: treatmentDateController,
-                            label: 'Treatment Date',
-                            hint: '',
-                            onTap: () {},
-                            suffix: Icon(
-                              Icons.date_range,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          Text(
-                            'Treament Time',
-                            style: AppStyles.getRegularStyle(fontSize: 16),
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: CustomDropDownButtonField(
-                                  fillColor: Colors.grey.shade200,
-                                  items: List.generate(24, (i) => '${i + 1}'),
-                                  hint: 'Hours',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(7),
-                                    borderSide: BorderSide.none,
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      Radio(
+                                        value: pl.cardPayment,
+                                        groupValue: true,
+                                        onChanged: (v) => pl.changePaymentMode(v, 'card'),
+                                      ),
+                                      Text(
+                                        'Card',
+                                        style: AppStyles.getRegularStyle(fontSize: 16),
+                                      ),
+                                    ],
                                   ),
-                                  onChanged: (v) {
-                                    treatmentHour = v!;
-                                  },
                                 ),
-                              ),
-                              const SizedBox(width: 20),
-                              Expanded(
-                                child: CustomDropDownButtonField(
-                                  fillColor: Colors.grey.shade200,
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(7),
-                                    borderSide: BorderSide.none,
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      Radio(
+                                        value: pl.upiPayment,
+                                        groupValue: true,
+                                        onChanged: (v) => pl.changePaymentMode(v, 'upi'),
+                                      ),
+                                      Text(
+                                        'UPI',
+                                        style: AppStyles.getRegularStyle(fontSize: 16),
+                                      ),
+                                    ],
                                   ),
-                                  items: List.generate(60, (i) => '${i + 1}'),
-                                  hint: 'Minutes',
-                                  onChanged: (v) {
-                                    treatmentMinute = v!;
-                                  },
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                          TextButton(
-                            onPressed: () => createPdf(context),
-                            style: AppStyles.filledButton.copyWith(
-                              padding: const WidgetStatePropertyAll(EdgeInsets.all(10)),
-                              fixedSize: WidgetStatePropertyAll(
-                                Size(MediaQuery.sizeOf(context).width, 50),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            TextFieldWithLabel(
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                              validator: (v) {
+                                if (v!.isEmpty) {
+                                  return 'Enter a amount';
+                                }
+                              },
+                              controller: advanceAmountController,
+                              label: 'Advance Amount',
+                              hint: '',
+                            ),
+                            const SizedBox(height: 20),
+                            TextFieldWithLabel(
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                              validator: (v) {
+                                if (v!.isEmpty) {
+                                  return 'Enter a amount';
+                                }
+                              },
+                              controller: balanceAmountController,
+                              label: 'Balance Amount',
+                              hint: '',
+                            ),
+                            const SizedBox(height: 20),
+                            TextFieldWithLabel(
+                              controller: treatmentDateController,
+                              label: 'Treatment Date',
+                              hint: '',
+                              validator: (v) {
+                                if (v!.isEmpty) {
+                                  return 'Enter a date';
+                                }
+                              },
+                              onTap: () async {
+                                DateTime date = await showDatePicker(context: context, firstDate: DateTime(1900), lastDate: DateTime(2050)) ?? DateTime.now();
+                                treatmentDate = date?.toDocumentDateFormat().toString();
+                                treatmentDateController.text = treatmentDate!;
+                              },
+                              suffix: Icon(
+                                Icons.date_range,
+                                color: AppColors.primary,
                               ),
                             ),
-                            child: const Text('Save'),
-                          ),
-                        ],
+                            const SizedBox(height: 20),
+                            Text(
+                              'Treament Time',
+                              style: AppStyles.getRegularStyle(fontSize: 16),
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: CustomDropDownButtonField(
+                                    validator: (v) {
+                                      if (v == null) {
+                                        return 'Enter a hour';
+                                      }
+                                    },
+                                    fillColor: Colors.grey.shade200,
+                                    items: List.generate(24, (i) => '${i + 1}'),
+                                    hint: 'Hours',
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(7),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    onChanged: (v) {
+                                      treatmentHour = v!;
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 20),
+                                Expanded(
+                                  child: CustomDropDownButtonField(
+                                    validator: (v) {
+                                      if (v == null) {
+                                        return 'Enter a minute';
+                                      }
+                                    },
+                                    fillColor: Colors.grey.shade200,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(7),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    items: List.generate(60, (i) => '${i + 1}'),
+                                    hint: 'Minutes',
+                                    onChanged: (v) {
+                                      treatmentMinute = v!;
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            TextButton(
+                              onPressed: () {
+                                if (!formKey.currentState!.validate()) {
+                                  return;
+                                }
+                                String time = formatTime(treatmentHour ?? '8', treatmentMinute ?? '00');
+                                List<String> maleCounts = [];
+                                List<String> feMaleCounts = [];
+                                List<String> treatments = [];
+                                List<Treatment> treatmentsModels = [];
+
+                                for (var item in pl.selectedTreatments) {
+                                  maleCounts.add(item['male']);
+                                  feMaleCounts.add(item['female']);
+                                  treatments.add(item['treatment']);
+                                  treatmentsModels.add(pl.treatmentsModel.treatments!.firstWhere((e) => e.name == item['treatment']));
+                                }
+
+                                pl
+                                    .registerPatient(context,
+                                        name: nameController.text,
+                                        executive: '',
+                                        payment: pl.selectedPayment.toString(),
+                                        phone: whatsappNumberController.text,
+                                        address: addressController.text,
+                                        totalAmount: int.parse(totalAmountController.text),
+                                        discountAmount: int.parse(discountAmountController.text),
+                                        advanceAmount: int.parse(advanceAmountController.text),
+                                        balanceAmount: int.parse(balanceAmountController.text),
+                                        dateAndTime: '$treatmentDate-$time',
+                                        male: maleCounts,
+                                        feMale: feMaleCounts,
+                                        branch: branch!,
+                                        treatments: treatments)
+                                    .then((v) {
+                                  createPdf(context,
+                                      name: nameController.text,
+                                      executive: '',
+                                      payment: pl.selectedPayment.toString(),
+                                      phone: whatsappNumberController.text,
+                                      address: addressController.text,
+                                      totalAmount: int.parse(totalAmountController.text).toDouble(),
+                                      discountAmount: int.parse(discountAmountController.text).toDouble(),
+                                      advanceAmount: int.parse(advanceAmountController.text).toDouble(),
+                                      balanceAmount: int.parse(balanceAmountController.text).toDouble(),
+                                      date: treatmentDate!,
+                                      time: time,
+                                      male: maleCounts,
+                                      feMale: feMaleCounts,
+                                      branch: pl.branchModel.branches!.firstWhere((v) => branch == v.name),
+                                      treatments: treatmentsModels);
+                                });
+                              },
+                              style: AppStyles.filledButton.copyWith(
+                                padding: const WidgetStatePropertyAll(EdgeInsets.all(10)),
+                                fixedSize: WidgetStatePropertyAll(
+                                  Size(MediaQuery.sizeOf(context).width, 50),
+                                ),
+                              ),
+                              child: const Text('Save'),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
@@ -357,6 +489,20 @@ class _RegisterPatientState extends State<RegisterPatient> {
         );
       },
     );
+  }
+
+  String formatTime(String hoursStr, String minutesStr) {
+    int hours = int.parse(hoursStr);
+    int minutes = int.parse(minutesStr);
+
+    String period = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    if (hours == 0) {
+      hours = 12; // Handle midnight and noon
+    }
+
+    String formattedTime = '$hours:${minutes.toString().padLeft(2, '0')} $period';
+    return formattedTime;
   }
 
   treatMentDialogue(BuildContext context, String operation, List<String> treatments, {String? selectedTreatment, String? maleCount, String? femaleCount, int? index}) {

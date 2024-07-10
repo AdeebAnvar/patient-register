@@ -1,16 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:novindus_mechine_test/constatnts/styles.dart';
 import 'package:novindus_mechine_test/widgets/custom_textfield.dart';
 
 class TextFieldWithLabel extends StatelessWidget {
   const TextFieldWithLabel(
-      {super.key, required this.controller, required this.hint, required this.label, this.suffix, this.validator, this.obscureText = false, this.onChanged, this.onTap});
+      {super.key,
+      required this.controller,
+      required this.hint,
+      required this.label,
+      this.suffix,
+      this.validator,
+      this.obscureText = false,
+      this.onChanged,
+      this.onTap,
+      this.keyboardType,
+      this.inputFormatters});
   final TextEditingController controller;
   final String hint;
   final String label;
   final Widget? suffix;
   final String? Function(String? value)? validator;
   final bool obscureText;
+  final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
   final Function(String value)? onChanged;
   final Function()? onTap;
   @override
@@ -29,6 +42,8 @@ class TextFieldWithLabel extends StatelessWidget {
           onChanged: onChanged,
           validator: validator,
           controller: controller,
+          keyboardType: keyboardType,
+          inputFormatters: inputFormatters,
           hint: hint,
           fillColor: Colors.grey.shade200,
           suffix: suffix,

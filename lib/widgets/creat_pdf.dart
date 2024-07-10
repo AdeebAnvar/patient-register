@@ -3,12 +3,32 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:novindus_mechine_test/constatnts/string_utils.dart';
+import 'package:novindus_mechine_test/data/models/branch_model.dart';
+import 'package:novindus_mechine_test/data/models/treatments_model.dart';
 import 'package:novindus_mechine_test/presentation/screens/pdf_viewing_screen.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
-createPdf(BuildContext context) async {
+createPdf(
+  BuildContext context, {
+  required String name,
+  required String executive,
+  required String payment,
+  required String phone,
+  required String address,
+  required double totalAmount,
+  required double discountAmount,
+  required double advanceAmount,
+  required double balanceAmount,
+  required String date,
+  required String time,
+  required List<String> male,
+  required List<String> feMale,
+  required Branch branch,
+  required List<Treatment> treatments,
+}) async {
   final pdf = pw.Document(
     pageMode: PdfPageMode.fullscreen,
   );
@@ -34,7 +54,70 @@ createPdf(BuildContext context) async {
       build: (pw.Context context) => pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          buildHeader(logoImage),
+          pw.Header(
+            child: pw.Padding(
+              padding: const pw.EdgeInsets.all(50),
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Image(
+                    logoImage,
+                    height: 76,
+                    width: 80,
+                  ),
+                  pw.Container(
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.end,
+                      children: [
+                        buildText(
+                          branch.name!,
+                          pw.TextStyle(
+                            fontSize: 10,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                        pw.SizedBox(height: 5),
+                        buildText(
+                          branch.address!,
+                          pw.TextStyle(
+                            fontSize: 10,
+                            color: PdfColors.grey,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                        pw.SizedBox(height: 5),
+                        buildText(
+                          branch.mail!,
+                          pw.TextStyle(
+                            fontSize: 10,
+                            color: PdfColors.grey,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                        pw.SizedBox(height: 5),
+                        buildText(
+                          'Mob: ${branch.phone} | +91 9786543210',
+                          pw.TextStyle(
+                            fontSize: 10,
+                            color: PdfColors.grey,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                        pw.SizedBox(height: 5),
+                        buildText(
+                          branch.phone!,
+                          pw.TextStyle(
+                            fontSize: 10,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ),
           pw.SizedBox(height: 20),
           pw.Padding(
             padding: const pw.EdgeInsets.symmetric(horizontal: 50, vertical: 16),
@@ -55,11 +138,11 @@ createPdf(BuildContext context) async {
                     pw.Expanded(
                       child: pw.Column(
                         children: [
-                          buildRowText(title: 'Name', content: 'Salih T'),
+                          buildRowText(title: 'Name', content: name),
                           pw.SizedBox(height: 10),
-                          buildRowText(title: 'Address', content: 'Nadakkave, Kozhikkode'),
+                          buildRowText(title: 'Address', content: address),
                           pw.SizedBox(height: 10),
-                          buildRowText(title: 'WhatsApp Number', content: '+91 987654321'),
+                          buildRowText(title: 'WhatsApp Number', content: phone),
                         ],
                       ),
                     ),
@@ -67,11 +150,11 @@ createPdf(BuildContext context) async {
                     pw.Expanded(
                       child: pw.Column(
                         children: [
-                          buildRowText(title: 'Booked On', content: '31/01/2024 | 12:12pm'),
+                          buildRowText(title: 'Booked On', content: '12-02-12'),
                           pw.SizedBox(height: 10),
-                          buildRowText(title: 'Treatment Date', content: '21/02/2024'),
+                          buildRowText(title: 'Treatment Date', content: date),
                           pw.SizedBox(height: 10),
-                          buildRowText(title: 'Treatment Time ', content: 'Treatment Time'),
+                          buildRowText(title: 'Treatment Time ', content: time),
                         ],
                       ),
                     ),
@@ -92,54 +175,36 @@ createPdf(BuildContext context) async {
                           )
                           .toList(),
                     ),
-                    pw.TableRow(
-                      children: [
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.only(right: 10, top: 10, bottom: 10),
-                          child: pw.Text('Panchakarma', style: pw.TextStyle(color: PdfColors.grey700, fontWeight: pw.FontWeight.bold, fontSize: 15)),
-                        ),
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.only(right: 10, top: 10, bottom: 10),
-                          child: pw.Text('230', style: pw.TextStyle(color: PdfColors.grey700, fontWeight: pw.FontWeight.bold, fontSize: 15)),
-                        ),
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.only(right: 10, top: 10, bottom: 10),
-                          child: pw.Text('4', style: pw.TextStyle(color: PdfColors.grey700, fontWeight: pw.FontWeight.bold, fontSize: 15)),
-                        ),
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.only(right: 10, top: 10, bottom: 10),
-                          child: pw.Text('3', style: pw.TextStyle(color: PdfColors.grey700, fontWeight: pw.FontWeight.bold, fontSize: 15)),
-                        ),
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.only(right: 10, top: 10, bottom: 10),
-                          child: pw.Text('2,540', style: pw.TextStyle(color: PdfColors.grey700, fontWeight: pw.FontWeight.bold, fontSize: 15)),
+                    ...treatments
+                        .asMap()
+                        .entries
+                        .map(
+                          (e) => pw.TableRow(
+                            children: [
+                              pw.Padding(
+                                padding: const pw.EdgeInsets.only(right: 10, top: 10, bottom: 10),
+                                child: pw.Text(e.value.name!, style: pw.TextStyle(color: PdfColors.grey700, fontWeight: pw.FontWeight.bold, fontSize: 15)),
+                              ),
+                              pw.Padding(
+                                padding: const pw.EdgeInsets.only(right: 10, top: 10, bottom: 10),
+                                child: pw.Text(e.value.price!, style: pw.TextStyle(color: PdfColors.grey700, fontWeight: pw.FontWeight.bold, fontSize: 15)),
+                              ),
+                              pw.Padding(
+                                padding: const pw.EdgeInsets.only(right: 10, top: 10, bottom: 10),
+                                child: pw.Text(male[e.key], style: pw.TextStyle(color: PdfColors.grey700, fontWeight: pw.FontWeight.bold, fontSize: 15)),
+                              ),
+                              pw.Padding(
+                                padding: const pw.EdgeInsets.only(right: 10, top: 10, bottom: 10),
+                                child: pw.Text(feMale[e.key], style: pw.TextStyle(color: PdfColors.grey700, fontWeight: pw.FontWeight.bold, fontSize: 15)),
+                              ),
+                              pw.Padding(
+                                padding: const pw.EdgeInsets.only(right: 10, top: 10, bottom: 10),
+                                child: pw.Text(totalAmount.toString(), style: pw.TextStyle(color: PdfColors.grey700, fontWeight: pw.FontWeight.bold, fontSize: 15)),
+                              )
+                            ],
+                          ),
                         )
-                      ],
-                    ),
-                    pw.TableRow(
-                      children: [
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.only(right: 10, top: 10, bottom: 10),
-                          child: pw.Text('Panchakarma', style: pw.TextStyle(color: PdfColors.grey700, fontWeight: pw.FontWeight.bold, fontSize: 15)),
-                        ),
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.only(right: 10, top: 10, bottom: 10),
-                          child: pw.Text('230', style: pw.TextStyle(color: PdfColors.grey700, fontWeight: pw.FontWeight.bold, fontSize: 15)),
-                        ),
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.only(right: 10, top: 10, bottom: 10),
-                          child: pw.Text('4', style: pw.TextStyle(color: PdfColors.grey700, fontWeight: pw.FontWeight.bold, fontSize: 15)),
-                        ),
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.only(right: 10, top: 10, bottom: 10),
-                          child: pw.Text('3', style: pw.TextStyle(color: PdfColors.grey700, fontWeight: pw.FontWeight.bold, fontSize: 15)),
-                        ),
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.only(right: 10, top: 10, bottom: 10),
-                          child: pw.Text('2,540', style: pw.TextStyle(color: PdfColors.grey700, fontWeight: pw.FontWeight.bold, fontSize: 15)),
-                        )
-                      ],
-                    ),
+                        .toList(),
                   ],
                 ),
                 pw.SizedBox(height: 25),
@@ -302,80 +367,6 @@ createPdf(BuildContext context) async {
     },
   );
 }
-
-buildHeader(var logoImage) => pw.Header(
-      child: pw.Padding(
-        padding: const pw.EdgeInsets.all(50),
-        child: pw.Row(
-          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-          children: [
-            pw.Image(
-              logoImage,
-              height: 76,
-              width: 80,
-            ),
-            pw.Container(
-              child: pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.end,
-                children: [
-                  buildText(
-                    'Kumarakom',
-                    pw.TextStyle(
-                      fontSize: 10,
-                      fontWeight: pw.FontWeight.bold,
-                    ),
-                  ),
-                  pw.SizedBox(height: 5),
-                  buildText(
-                    'Cheepunkal P.O. Kumarakom, kottayam, Kerala - 686563',
-                    pw.TextStyle(
-                      fontSize: 10,
-                      color: PdfColors.grey,
-                      fontWeight: pw.FontWeight.bold,
-                    ),
-                  ),
-                  pw.SizedBox(height: 5),
-                  buildText(
-                    'e-mail: unknown@gmail.com',
-                    pw.TextStyle(
-                      fontSize: 10,
-                      color: PdfColors.grey,
-                      fontWeight: pw.FontWeight.bold,
-                    ),
-                  ),
-                  pw.SizedBox(height: 5),
-                  buildText(
-                    'e-mail: unknown@gmail.com',
-                    pw.TextStyle(
-                      fontSize: 10,
-                      color: PdfColors.grey,
-                      fontWeight: pw.FontWeight.bold,
-                    ),
-                  ),
-                  pw.SizedBox(height: 5),
-                  buildText(
-                    'Mob: +91 9876543210 | +91 9786543210',
-                    pw.TextStyle(
-                      fontSize: 10,
-                      color: PdfColors.grey,
-                      fontWeight: pw.FontWeight.bold,
-                    ),
-                  ),
-                  pw.SizedBox(height: 5),
-                  buildText(
-                    'GST No: 32AABCU9603R1ZW',
-                    pw.TextStyle(
-                      fontSize: 10,
-                      fontWeight: pw.FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            )
-          ],
-        ),
-      ),
-    );
 
 Future<pw.ImageProvider> imageFromAssetBundle(String assetPath) async {
   final bytes = await rootBundle.load(assetPath);
