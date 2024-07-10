@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 class CustomDropDownButtonField<T> extends StatelessWidget {
   const CustomDropDownButtonField({
     super.key,
-    this.value = String,
+    this.value,
     required this.items,
     required this.hint,
     this.border,
@@ -14,7 +14,7 @@ class CustomDropDownButtonField<T> extends StatelessWidget {
     this.fillColor,
     this.icon,
   });
-  final Type value;
+  final T? value;
   final List<T> items;
   final String hint;
   final OutlineInputBorder? border;
@@ -52,6 +52,7 @@ class CustomDropDownButtonField<T> extends StatelessWidget {
         style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w400, color: Colors.black),
       ),
       icon: icon,
+      value: value,
       items: items.map((i) {
         return DropdownMenuItem<T>(
           value: i,

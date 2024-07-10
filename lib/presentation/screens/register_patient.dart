@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:novindus_mechine_test/constatnts/app_colors.dart';
 import 'package:novindus_mechine_test/constatnts/styles.dart';
 import 'package:novindus_mechine_test/logic/patients_logic.dart';
@@ -40,6 +41,7 @@ class _RegisterPatientState extends State<RegisterPatient> {
   String? treatmentHour;
   String? treatmentMinute;
   String? branch;
+
   @override
   void initState() {
     patientsLogic = Provider.of<PatientsLogic>(context, listen: false);
@@ -161,9 +163,30 @@ class _RegisterPatientState extends State<RegisterPatient> {
                             style: AppStyles.getRegularStyle(fontSize: 16),
                           ),
                           const SizedBox(height: 5),
-                          TreatmentCard(
-                            maleCountController: maleCountController,
-                            femaleController: femaleController,
+                          if (pl.selectedTreatments.isEmpty) Align(child: Text('No treatments choosen')),
+                          Column(
+                            children: pl.selectedTreatments
+                                .asMap()
+                                .entries
+                                .map(
+                                  (e) => TreatmentCard(
+                                    onRemove: () => pl.removeTreatment(e.key),
+                                    onEdit: () => treatMentDialogue(
+                                      context,
+                                      'edit',
+                                      index: e.key,
+                                      pl.treatmentsModel.treatments!.map((e) => e.name!).toList(),
+                                      femaleCount: e.value['female'],
+                                      maleCount: e.value['male'],
+                                      selectedTreatment: e.value['treatment'],
+                                    ),
+                                    name: e.value['treatment'],
+                                    number: '${e.key + 1}',
+                                    maleCount: e.value['male'],
+                                    femaleCount: e.value['female'],
+                                  ),
+                                )
+                                .toList(),
                           ),
                           const SizedBox(height: 20),
                           TextButton.icon(
@@ -336,159 +359,218 @@ class _RegisterPatientState extends State<RegisterPatient> {
     );
   }
 
-  treatMentDialogue(
-    BuildContext context,
-    String operation,
-    List<String> treatments, {
-    String? selectedTreatment,
-    String? maleCount,
-    String? femaleCount,
-  }) {
-    TextEditingController maleController = TextEditingController();
-    String chosenTreatment;
+  treatMentDialogue(BuildContext context, String operation, List<String> treatments, {String? selectedTreatment, String? maleCount, String? femaleCount, int? index}) {
+    TextEditingController maleController = TextEditingController(text: '1');
+    TextEditingController feMaleController = TextEditingController(text: '1');
+
+    String? chosenTreatment;
+
+    GlobalKey<FormState> formKey = GlobalKey();
     showDialog(
         context: context,
         builder: (c) {
+          if (operation == 'edit') {
+            chosenTreatment = selectedTreatment;
+            maleController.text = maleCount!;
+            feMaleController.text = femaleCount!;
+          }
           return AlertDialog(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
             ),
             backgroundColor: Colors.white,
             surfaceTintColor: Colors.transparent,
-            content: Material(
-              color: Colors.white,
-              child: Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Choose Treatment',
-                      style: AppStyles.getRegularStyle(fontSize: 16),
-                    ),
-                    const SizedBox(height: 10),
-                    CustomDropDownButtonField(
-                      fillColor: Colors.grey.shade200,
-                      icon: Icon(
-                        Icons.keyboard_arrow_down,
-                        size: 10,
-                        color: AppColors.primary,
+            content: Consumer<PatientsLogic>(builder: (context, pl, child) {
+              return Material(
+                color: Colors.white,
+                child: Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Choose Treatment',
+                        style: AppStyles.getRegularStyle(fontSize: 16),
                       ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(7),
-                        borderSide: BorderSide.none,
+                      const SizedBox(height: 10),
+                      Form(
+                        key: formKey,
+                        child: CustomDropDownButtonField<String>(
+                          value: chosenTreatment,
+                          validator: (v) {
+                            if (v == null) {
+                              return 'Choose a treatment';
+                            }
+                          },
+                          fillColor: Colors.grey.shade200,
+                          icon: Icon(
+                            Icons.keyboard_arrow_down,
+                            size: 10,
+                            color: AppColors.primary,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(7),
+                            borderSide: BorderSide.none,
+                          ),
+                          items: treatments,
+                          hint: 'Choose Prefered Treatment',
+                          onChanged: (v) {
+                            chosenTreatment = v!;
+                          },
+                        ),
                       ),
-                      items: treatments,
-                      hint: 'Choose Prefered Treatment',
-                      onChanged: (v) {
-                        chosenTreatment = v!;
-                      },
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'Add Patients',
-                      style: AppStyles.getRegularStyle(fontSize: 16),
-                    ),
-                    const SizedBox(height: 5),
-                    Row(
-                      children: [
-                        Expanded(
-                            flex: 2,
-                            child: Container(
-                              height: 50,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(10),
-                                color: Colors.grey.shade200,
+                      const SizedBox(height: 10),
+                      Text(
+                        'Add Patients',
+                        style: AppStyles.getRegularStyle(fontSize: 16),
+                      ),
+                      const SizedBox(height: 5),
+                      Row(
+                        children: [
+                          Expanded(
+                              flex: 2,
+                              child: Container(
+                                height: 50,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(10),
+                                  color: Colors.grey.shade200,
+                                ),
+                                child: const Center(
+                                  child: Text('Male'),
+                                ),
+                              )),
+                          const SizedBox(width: 10),
+                          GestureDetector(
+                            onTap: () {
+                              print('object');
+                              pl.lessManCount(maleController.text);
+                              maleController.text = pl.manCount;
+                            },
+                            child: CircleAvatar(
+                                backgroundColor: AppColors.primary,
+                                child: const Text(
+                                  '-',
+                                  style: TextStyle(color: Colors.white),
+                                )),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: TextField(
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                              controller: maleController,
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
                               ),
-                              child: const Center(
-                                child: Text('Male'),
-                              ),
-                            )),
-                        const SizedBox(width: 10),
-                        CircleAvatar(
-                            backgroundColor: AppColors.primary,
-                            child: const Text(
-                              '-',
-                              style: TextStyle(color: Colors.white),
-                            )),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: TextField(
-                            enabled: false,
-                            controller: maleController,
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 10),
-                        CircleAvatar(
-                          backgroundColor: AppColors.primary,
-                          child: const Icon(
-                            Icons.add,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        Expanded(
-                            flex: 2,
-                            child: Container(
-                              height: 50,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(10),
-                                color: Colors.grey.shade200,
+                          const SizedBox(width: 10),
+                          GestureDetector(
+                            onTap: () {
+                              pl.addManCount(maleController.text);
+                              maleController.text = pl.manCount;
+                            },
+                            child: CircleAvatar(
+                              backgroundColor: AppColors.primary,
+                              child: const Icon(
+                                Icons.add,
+                                color: Colors.white,
                               ),
-                              child: const Center(
-                                child: Text('Fe Male'),
-                              ),
-                            )),
-                        const SizedBox(width: 10),
-                        CircleAvatar(
-                            backgroundColor: AppColors.primary,
-                            child: const Text(
-                              '-',
-                              style: TextStyle(color: Colors.white),
-                            )),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: TextField(
-                            enabled: false,
-                            controller: maleController,
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 10),
-                        CircleAvatar(
-                          backgroundColor: AppColors.primary,
-                          child: const Icon(
-                            Icons.add,
-                            color: Colors.white,
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Expanded(
+                              flex: 2,
+                              child: Container(
+                                height: 50,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(10),
+                                  color: Colors.grey.shade200,
+                                ),
+                                child: const Center(
+                                  child: Text('Female'),
+                                ),
+                              )),
+                          const SizedBox(width: 10),
+                          GestureDetector(
+                            onTap: () {
+                              pl.lessFemaleCount(feMaleController.text);
+                              feMaleController.text = pl.femaleCount;
+                            },
+                            child: CircleAvatar(
+                                backgroundColor: AppColors.primary,
+                                child: const Text(
+                                  '-',
+                                  style: TextStyle(color: Colors.white),
+                                )),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: TextField(
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                              controller: feMaleController,
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          GestureDetector(
+                            onTap: () {
+                              pl.addFemaleCount(feMaleController.text);
+                              feMaleController.text = pl.femaleCount;
+                            },
+                            child: CircleAvatar(
+                              backgroundColor: AppColors.primary,
+                              child: const Icon(
+                                Icons.add,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      TextButton(
+                        onPressed: () {
+                          if (!formKey.currentState!.validate()) {
+                            return;
+                          }
+                          if (operation == 'add') {
+                            pl.addTreatment(
+                              treatement: chosenTreatment!,
+                              male: maleController.text,
+                              female: feMaleController.text,
+                            );
+                          } else {
+                            pl.editTreatment(
+                              index: index!,
+                              treatement: chosenTreatment!,
+                              male: maleController.text,
+                              female: feMaleController.text,
+                            );
+                          }
+                          context.pop();
+                        },
+                        style: AppStyles.filledButton.copyWith(
+                          padding: const WidgetStatePropertyAll(EdgeInsets.all(10)),
+                          fixedSize: WidgetStatePropertyAll(
+                            Size(MediaQuery.sizeOf(context).width, 50),
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    TextButton(
-                      onPressed: () {},
-                      style: AppStyles.filledButton.copyWith(
-                        padding: const WidgetStatePropertyAll(EdgeInsets.all(10)),
-                        fixedSize: WidgetStatePropertyAll(
-                          Size(MediaQuery.sizeOf(context).width, 50),
-                        ),
+                        child: const Text('Save'),
                       ),
-                      child: const Text('Save'),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ),
+              );
+            }),
           );
         });
   }
@@ -497,36 +579,5 @@ class _RegisterPatientState extends State<RegisterPatient> {
   void dispose() {
     patientsLogic.dispose();
     super.dispose();
-  }
-}
-
-class MySeparator extends StatelessWidget {
-  const MySeparator({Key? key, this.height = 1, this.color = Colors.black}) : super(key: key);
-  final double height;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
-        final boxWidth = constraints.constrainWidth();
-        const dashWidth = 10.0;
-        final dashHeight = height;
-        final dashCount = (boxWidth / (2 * dashWidth)).floor();
-        return Flex(
-          children: List.generate(dashCount, (_) {
-            return SizedBox(
-              width: dashWidth,
-              height: dashHeight,
-              child: DecoratedBox(
-                decoration: BoxDecoration(color: color),
-              ),
-            );
-          }),
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          direction: Axis.horizontal,
-        );
-      },
-    );
   }
 }

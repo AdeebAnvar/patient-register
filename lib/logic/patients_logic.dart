@@ -18,6 +18,11 @@ class PatientsLogic extends ChangeNotifier {
   bool isLoading = false;
   bool isError = false;
 
+  String manCount = '1';
+  String femaleCount = '1';
+
+  List<Map<String, dynamic>> selectedTreatments = [];
+
   PatientsModel patients = PatientsModel();
   TreatmentsModel treatmentsModel = TreatmentsModel();
   BranchModel branchModel = BranchModel();
@@ -59,5 +64,71 @@ class PatientsLogic extends ChangeNotifier {
     if (response.status == ApiResponseStatus.success && response.data!.branches!.isNotEmpty) {
       branchModel = response.data!;
     }
+  }
+
+  void addManCount(String value) {
+    int count = int.parse(value);
+    int v = count + 1;
+    manCount = v.toString();
+    notifyListeners();
+  }
+
+  void lessManCount(String value) {
+    int count = int.parse(value);
+    if (count > 1) {
+      int v = count - 1;
+      manCount = v.toString();
+      notifyListeners();
+    }
+  }
+
+  void addFemaleCount(String value) {
+    int count = int.parse(value);
+    int v = count + 1;
+    femaleCount = v.toString();
+    notifyListeners();
+  }
+
+  void lessFemaleCount(String value) {
+    int count = int.parse(value);
+    if (count > 1) {
+      int v = count - 1;
+      femaleCount = v.toString();
+      notifyListeners();
+    }
+  }
+
+  void addTreatment({
+    required String treatement,
+    required String male,
+    required String female,
+  }) {
+    selectedTreatments.add({
+      'treatment': treatement,
+      'male': male,
+      'female': female,
+    });
+
+    notifyListeners();
+  }
+
+  removeTreatment(int index) {
+    selectedTreatments.removeAt(index);
+    notifyListeners();
+  }
+
+  void editTreatment({
+    required String treatement,
+    required String male,
+    required String female,
+    required int index,
+  }) {
+    selectedTreatments[index] = {
+      'treatment': treatement,
+      'male': male,
+      'female': female,
+    };
+
+    notifyListeners();
   }
 }

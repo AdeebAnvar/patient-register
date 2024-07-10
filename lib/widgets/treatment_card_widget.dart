@@ -5,15 +5,24 @@ import 'package:novindus_mechine_test/constatnts/styles.dart';
 class TreatmentCard extends StatelessWidget {
   const TreatmentCard({
     super.key,
-    required this.maleCountController,
-    required this.femaleController,
+    required this.maleCount,
+    required this.femaleCount,
+    required this.number,
+    required this.name,
+    required this.onRemove,
+    required this.onEdit,
   });
 
-  final TextEditingController maleCountController;
-  final TextEditingController femaleController;
-
+  final String maleCount;
+  final String femaleCount;
+  final String number;
+  final String name;
+  final void Function() onRemove;
+  final void Function() onEdit;
   @override
   Widget build(BuildContext context) {
+    TextEditingController maleCountController = TextEditingController(text: maleCount);
+    TextEditingController femaleController = TextEditingController(text: femaleCount);
     return Card(
       surfaceTintColor: Colors.transparent,
       color: Colors.grey.shade200,
@@ -23,15 +32,18 @@ class TreatmentCard extends StatelessWidget {
           children: [
             ListTile(
               title: Text(
-                '1. Couple compo package inside vertibular',
+                '$number. $name',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppStyles.getSemiBoldStyle(fontSize: 18),
               ),
-              trailing: CircleAvatar(
-                radius: 12,
-                backgroundColor: AppColors.appRed,
-                child: const Icon(size: 20, Icons.close, color: Colors.white),
+              trailing: GestureDetector(
+                onTap: onRemove,
+                child: CircleAvatar(
+                  radius: 12,
+                  backgroundColor: AppColors.appRed,
+                  child: const Icon(size: 20, Icons.close, color: Colors.white),
+                ),
               ),
             ),
             const SizedBox(height: 10),
@@ -62,7 +74,7 @@ class TreatmentCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  Icon(Icons.edit, color: AppColors.primary)
+                  GestureDetector(onTap: onEdit, child: Icon(Icons.edit, color: AppColors.primary))
                 ],
               ),
             )
